@@ -9,8 +9,8 @@
 <body>
     <form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
         <p>
-            <input type="text" name="query" />
-            <input type="text" name="key" />
+            <input type="text" name="query" placeholder="URL" />
+            <input type="text" name="key" placeholder="SQL検索" />
             <input type="submit" value="送信" />
         </p>
     </form>
@@ -66,7 +66,7 @@
             return $DATA;
         }
 
-        function insert_sql($table, $url, $contents, $query)
+        function insert_sql($table, $url, $contents, $key)
         {
             try {
                 $dbh = new PDO('sqlite:test.db', '', '');
@@ -74,7 +74,7 @@
                 $sth = $dbh->prepare($sql);
                 $sth->execute(array($url, $contents));
 
-                $q = " '%$query%' ";
+                $q = " '%$key%' ";
                 $sql = "select * from $table where contents like $q";
                 $sth = $dbh->prepare($sql);
                 $sth->execute();
