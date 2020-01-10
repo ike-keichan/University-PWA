@@ -3,15 +3,14 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>sample4-2</title>
+    <title>ensyu4-2</title>
 </head>
 
 <body>
     <?php
+    $month = array("Oct" => 10, "Nov" => 11, "Dec" => 12);
     $week = array(0 => "月", 1 => "火", 2 => "水");
-    foreach ($week as $value) {
-        print "$value <hr>";
-    }
+    print "今日は" . $month["Oct"] . "月の" . $week[0] . "曜日です。";
     ?>
 </body>
 

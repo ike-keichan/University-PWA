@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
     <title>report6-1</title>
 </head>
+
 <body>
     <h1>実践Webアプリケーション レポート6-1</h1>
     <p>ーーーーーーーーーーーーーーーーーーーー</p>
@@ -16,17 +18,19 @@
     </p><br>
     <a>実行結果</a><br>
     <?php
-        function sum($number) { 
-            $outputNumber = 0;
-            for ($index = 0; $index <= $number; $index++){
-                 $outputNumber += $index;
-            }
-            return $outputNumber; 
+    function sum($number)
+    {
+        $outputNumber = 0;
+        for ($index = 0; $index <= $number; $index++) {
+            $outputNumber += $index;
         }
+        return $outputNumber;
+    }
 
-        $sumNumber = sum(10);
-        print "sum：$sumNumber";
+    $sumNumber = sum(10);
+    print "sum：$sumNumber";
 
     ?>
 </body>
+
 </html>
