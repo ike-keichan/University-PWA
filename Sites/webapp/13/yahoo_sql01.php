@@ -1,32 +1,22 @@
-<!DOCTYPE html>
-<html lang="ja">
+<html>
 
 <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>sql06</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>yahoo_sql01</title>
 </head>
 
 <body>
     <form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
         <p>
-            <input type="text" name="query" placeholder="URL" />
-            <input type="text" name="key" placeholder="SQL検索" />
+            <input type="text" name="query" />
             <input type="submit" value="送信" />
         </p>
     </form>
     <?php
 
-    //これはPHP5系で廃止されている。$_POSTを使用しましょう。
-    //import_request_variables("p", "q_");
-
     $q_query = $_POST["query"];
-    $q_key = $_POST["key"];
-    if (isset($q_query) && isseqt($q_key)) {
+    if (isset($q_query)) {
         echo "<h1>" . $q_query . "</h1><hr>";
-        echo "<h1>" . $q_key . "</h1><hr>";
-
-        $query = $q_query;
-        $key = $q_key;
 
         function httpRequest($url)
         {
@@ -69,7 +59,7 @@
             return $DATA;
         }
 
-        function insert_sql($table, $url, $contents, $key)
+        function insert_sql($table, $url, $contents)
         {
             try {
                 $dbh = new PDO('sqlite:test.db', '', '');
@@ -77,33 +67,57 @@
                 $sth = $dbh->prepare($sql);
                 $sth->execute(array($url, $contents));
 
-                $q = " '%$key%' ";
+                $q = " '%t%' ";
                 $sql = "select * from $table where contents like $q";
                 $sth = $dbh->prepare($sql);
                 $sth->execute();
-
-                $sql = "select count(*) from $table where contents like $q";
-                $sth = $dbh->prepare($sql);
-                $sth->execute();
-
-                $cnt = $sth->fetchColumn();
-                echo $cnt . "<br>";
-
-                while ($row = $sth->fetch()) { //テーブルの内容を1行ずつ処理
-                    echo $row["url"] . $row["contents"] . "<br>";
-                }
             } catch (PDOException $e) {
                 print "エラー!: " . $e->getMessage() . "<br/>";
                 die();
             }
         }
 
-        $url = $q_query;
-        $contents = "test data05";
-        insert_sql("list", $url, $contents, $key);
+        function yahoo_mecab($data, $hinshi, $url)
+        {
+            $q_url = $url;
+            $api_key = "APIのID";
+            $res = "surface,reading,pos,feature";
+
+            $url = "http://jlp.yahooapis.jp/MAService/V1/parse?appid=" . $api_key . "&response=" . $res . "&sentence=" . urlencode($data);
+
+            //リクエスト送信&レスポンス取得 
+            $rss = file_get_contents($url);
+
+            //取得したXMLを解析
+            $xml = simplexml_load_string($rss);
+
+            foreach ($xml->ma_result->word_list->word as $item) {
+                $word = $item->feature;
+                if (mb_ereg($hinshi, $word) == 1) {
+                    //$contentsにsurfaceを代入 
+                    $contents = $item->surface;
+                    //insert_sqlの呼出し
+                    insert_sql("list", $q_url, $contents);
+                    echo $item->surface . "|" . $word;
+                    echo "<br>";
+                }
+            }
+        }
 
         list($head, $data) = httpRequest($q_query);
-        echo $data;
+        //タグ除去
+        $data = strip_tags($data);
+        $hinshi = "名詞";
+
+        $start = 0;
+        //100KB=1024*100/2=51200文字だがfile_get_contents()制限の為 
+        $size = 512;
+        $end = mb_strlen($data);
+        do {
+            $data2 = mb_substr($data, $start - $end, $size);
+            yahoo_mecab($data2, $hinshi, $q_query);
+            $start += $size;
+        } while (($start - $size) <= $end);
     }
 
 
