@@ -2,13 +2,38 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style type="text/css">
+        <!--
+        .network_analysis_table {
+            width: auto;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        .word_analysis_table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        .word_analysis_table th,
+        .word_analysis_table td {
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .word_analysis_table tr:nth-child(odd) {
+            background-color: #eee
+        }
+        -->
+    </style>
     <title>report_final</title>
 </head>
 
 <body>
     <form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
         <p>
-            <input type="text" name="query" />
+            <input type="text" name="query" placeholder="解析するページのURL" />
             <input type="submit" value="送信" />
         </p>
     </form>
@@ -39,10 +64,12 @@
                 $ppath = $purl["path"];
             }
 
-            echo "プロトコル：" . $psheme . "<br>";
-            echo "ホスト名：" . $phost . "<br>";
-            echo "ポート：" . $pport . "<br>";
-            echo "パス：" . $ppath . "<br> <hr>";
+            echo "<table class=\"network_analysis_table\">";
+            echo "<tr> <td>プロトコル</td> <td>：</td> <td>" . $psheme . " </td> <tr>";
+            echo "<tr> <td>ホスト名</td> <td>：</td> <td>" . $phost . " </td> <tr>";
+            echo "<tr> <td>ポート</td> <td>：</td> <td>" . $pport . " </td> <tr>";
+            echo "<tr> <td>パス</td> <td>：</td> <td>" . $ppath . " </td> <tr>";
+            echo "</table> <hr>";
 
             $fp = fsockopen($phost, $pport, $errno, $errstr);
             socket_set_timeout($fp, 10);
@@ -127,11 +154,11 @@
             }
         } while (($start - $size) <= $end);
 
-        foreach ($word as $v) {
+        foreach ($word as $value) {
             $keyword = array_search($v, $word);
             if ($keyword === false) {
-                $list_count_of_word["$v"] = 1;
-                $list_count_of_document["$v"] = 1;
+                $list_count_of_word["$value"] = 1;
+                $list_count_of_document["$value"] = 1;
             }
         }
 
@@ -162,46 +189,60 @@
         }
 
         arsort($list_count_of_word);
-        $rank = 1;
         $count_of_all_word = array_sum($list_count_of_word);
     ?>
-        <table>
+        <table class="word_analysis_table">
             <tr>
-                <th>順位</th>
+                <th>順位（tf-idf値順）</th>
                 <th>単語</th>
-                <th>解析ページでの出現回数</th>
+                <th>tf-idf値</th>
                 <th>tf値</th>
                 <th>df値</th>
                 <th>idf値</th>
-                <th>tf-idf値</th>
+                <th>解析ページでの出現回数</th>
             </tr>
         <?php
 
-        foreach ($list_count_of_word as $k => $v) {
-            $term_frequency = $v / $count_of_all_word;
-            $document_frequency = log($list_count_of_document["$k"] / $count_of_all_document);
+        foreach ($list_count_of_word as $keyword => $value) {
+            $list_term_frequency["$keyword"] = $value / $count_of_all_word;
+            $list_document_frequency["$keyword"] = log($list_count_of_document["$keyword"] / $count_of_all_document);
 
-            if ($document_frequency != 0) {
-                $inverse_document_frequency = 1 / $document_frequency;
+            if ($list_document_frequency["$keyword"] != 0) {
+                $list_inverse_document_frequency["$keyword"] = 1 / $list_document_frequency["$keyword"];
             } else {
-                $inverse_document_frequency = 0;
+                $list_inverse_document_frequency["$keyword"] = 0;
             }
 
-            $list_of_idf_df["$k"] = $term_frequency * $inverse_document_frequency;
+            $list_of_idf_df["$keyword"] = $list_term_frequency["$keyword"] * $list_inverse_document_frequency["$keyword"];
+        }
 
-            echo "<tr>";
-            echo "<td>" . $rank . "</td>";
-            echo "<td>" . $k . "</td>";
-            echo "<td>" . $v . "</td>";
-            echo "<td>" . $term_frequency . "</td>";
-            echo "<td>" . $document_frequency . "</td>";
-            echo "<td>" . $inverse_document_frequency . "</td>";
-            echo "<td>" . $list_of_idf_df["$k"] . "</td>";
-            echo "</tr>";
-            $rank++;
+        arsort($list_of_idf_df);
+        $rank = 1;
+        $count = 1;
+        $prev_value = 1;
+
+        foreach ($list_of_idf_df as $keyword => $value) {
+
+            if ($value != $prev_value) {
+                $rank = $count;
+            }
+
             if ($rank > 10) {
                 break;
             }
+
+            echo "<tr>";
+            echo "<td>" . $rank . "</td>";
+            echo "<td>" . $keyword . "</td>";
+            echo "<td>" . $value . "</td>";
+            echo "<td>" . $list_term_frequency["$keyword"] . "</td>";
+            echo "<td>" . $list_document_frequency["$keyword"] . "</td>";
+            echo "<td>" . $list_inverse_document_frequency["$keyword"] . "</td>";
+            echo "<td>" . $list_count_of_word["$keyword"] . "</td>";
+            echo "</tr>";
+
+            $count++;
+            $prev_value = $value;
         }
     }
         ?>
