@@ -110,7 +110,7 @@
         function yahoo_mecab($data, $hinshi, $url)
         {
             $query_url = $url;
-            $api_key = "dj00aiZpPXNSeWx4V2h5cjh0RiZzPWNvbnN1bWVyc2VjcmV0Jng9YmY-";
+            $api_key = "APIのID";
             $res = "surface,reading,pos,feature";
 
             $url = "http://jlp.yahooapis.jp/MAService/V1/parse?appid=" . $api_key . "&response=" . $res . "&sentence=" . urlencode($data);
