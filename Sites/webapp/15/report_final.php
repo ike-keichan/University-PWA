@@ -4,6 +4,27 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style type="text/css">
         <!--
+        .title {
+            ont-size: 1.2em;
+            background: #5fc2f5;
+            padding: 4px;
+            color: #FFF;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+
+        .report-textbox {
+            margin: 2em 0;
+            background: #f1f1f1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+        }
+
+        .report_table {
+            width: auto;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
         .network_analysis_table {
             width: auto;
             border-collapse: collapse;
@@ -31,6 +52,57 @@
 </head>
 
 <body>
+    <h1 class="title">解析ページ(´・ω・｀)</h1>
+
+    <div class="report-textbox">
+        <table class="report_table">
+            <tr>
+                <td>学生証番号</td>
+                <td>：</td>
+                <td>あああああ</td>
+            </tr>
+            <tr>
+                <td>名前</td>
+                <td>：</td>
+                <td>あああああ</td>
+            </tr>
+            <tr>
+                <td>到達番号</td>
+                <td>：</td>
+                <td>⑥</td>
+            </tr>
+            <tr>
+                <td>最終更新日</td>
+                <td>：</td>
+                <td>2019/1/20</td>
+            </tr>
+            <tr>
+                <td>入力URL</td>
+                <td>：</td>
+                <td>「http://www.cc.kyoto-su.ac.jp/~atsushi/index-j.html」</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td>「http://ylb.jp/」</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td>「https://www.kyoto-su.ac.jp/entrance/index-ksu.html」</td>
+            </tr>
+            <tr>
+                <td>補足</td>
+                <td>：</td>
+                <td>tf-idf値Top10のもののみを表示した場合、同率1位でtf-idf値が0のものが多数出現し、正しくtf-idf値を計算できているかわからなかったため全ての単語を出力しています。<br>一応、tf-idf値順にはソートできていますので勝手ながら課題⑥を終了したと判断しました。</td>
+            </tr>
+            <tr>
+                <td>感想</td>
+                <td>：</td>
+                <td>半年間ありがとうございました。Webプログラミング楽しかったです。</td>
+            </tr>
+        </table>
+    </div>
     <form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
         <p>
             <input type="text" name="query" placeholder="解析するページのURL" />
@@ -155,7 +227,7 @@
         } while (($start - $size) <= $end);
 
         foreach ($word as $value) {
-            $keyword = array_search($v, $word);
+            $keyword = array_search($value, $word);
             if ($keyword === false) {
                 $list_count_of_word["$value"] = 1;
                 $list_count_of_document["$value"] = 1;
@@ -199,7 +271,8 @@
                 <th>tf値</th>
                 <th>df値</th>
                 <th>idf値</th>
-                <th>解析ページでの出現回数</th>
+                <th>現在解析したページ内での出現回数</th>
+                <th>解析した単語が出現したページ数</th>
             </tr>
         <?php
 
@@ -227,10 +300,6 @@
                 $rank = $count;
             }
 
-            if ($rank > 10) {
-                break;
-            }
-
             echo "<tr>";
             echo "<td>" . $rank . "</td>";
             echo "<td>" . $keyword . "</td>";
@@ -239,6 +308,7 @@
             echo "<td>" . $list_document_frequency["$keyword"] . "</td>";
             echo "<td>" . $list_inverse_document_frequency["$keyword"] . "</td>";
             echo "<td>" . $list_count_of_word["$keyword"] . "</td>";
+            echo "<td>" . $list_count_of_document["$keyword"] . "</td>";
             echo "</tr>";
 
             $count++;
