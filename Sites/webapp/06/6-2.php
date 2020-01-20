@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>ensyu6-2</title>
+    <title>6-2</title>
 </head>
 
 <body>

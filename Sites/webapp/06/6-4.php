@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>ensyu6-4</title>
+    <title>6-4</title>
 </head>
 
 <body>
@@ -12,11 +12,11 @@
     {
         var $name, $weight, $height, $bmi;
 
-        function __Person($inputName, $inputWeight, $inputHeight)
+        function __Person($input_name, $input_weight, $input_height)
         {
-            $this->name = $inputName;
-            $this->weight = $inputWeight;
-            $this->height = $inputHeight;
+            $this->name = $input_name;
+            $this->weight = $input_weight;
+            $this->height = $input_height;
         }
 
         function bmi_cal($who = "")

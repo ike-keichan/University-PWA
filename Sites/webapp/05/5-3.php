@@ -3,14 +3,14 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>ensyu5-3</title>
+    <title>5-3</title>
 </head>
 
 <body>
     <?php
-    function drink(&$a)
+    function drink(&$a_drink)
     {
-        $a = "coffee";
+        $a_drink = "coffee";
     }
     $cup = "tea";
     print " $cup <br> ";

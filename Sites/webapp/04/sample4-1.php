@@ -8,8 +8,8 @@
 
 <body>
     <?php
-    for (print "A", $i = 0; print "B<br>", $i < 10; print "C", $i++) {
-        echo $i;
+    for (print "A", $index = 0; print "B<br>", $index < 10; print "C", $index++) {
+        echo $index;
     }
     ?>
 </body>
