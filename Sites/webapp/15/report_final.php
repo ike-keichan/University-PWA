@@ -74,7 +74,7 @@
             <tr>
                 <td>最終更新日</td>
                 <td>：</td>
-                <td>2019/1/20</td>
+                <td>2019/1/25</td>
             </tr>
             <tr>
                 <td>入力URL</td>
@@ -94,7 +94,7 @@
             <tr>
                 <td>補足</td>
                 <td>：</td>
-                <td>tf-idf値Top10のもののみを表示した場合、同率1位でtf-idf値が0のものが多数出現し、正しくtf-idf値を計算できているかわからなかったため全ての単語を出力しています。<br>一応、tf-idf値順にはソートできていますので勝手ながら課題⑥を終了したと判断しました。</td>
+                <td>tf-idf値Top10のもののみを表示した場合、入力によっては同率でtf-idf値が同じものが多数出現し、正しく計算できているかわからないケースがあったため全ての単語を出力しています。<br>一応、tf-idf値順にはソートできていますので勝手ながら課題⑥を終了したと判断しました。</td>
             </tr>
             <tr>
                 <td>感想</td>
@@ -168,17 +168,13 @@
                 $sql = "insert into $table (url, contents) values (?, ?)";
                 $sth = $dbh->prepare($sql);
                 $sth->execute(array($url, $contents));
-
-                $q = " \"%t%\" ";
-                $sql = "select * from $table where contents like $q";
-                $sth = $dbh->prepare($sql);
-                $sth->execute();
-            } catch (PDOException $e) {
-                print "エラー!: " . $e->getMessage() . "<br/>";
+            } catch (PDOException $error) {
+                print "エラー!: " . $error->getMessage() . "<br/>";
                 die();
             }
         }
 
+        //Yahoo!APIで解析を行い、解析結果をinsert_sql関数に引き渡す。
         function yahoo_mecab($data, $hinshi, $url)
         {
             $query_url = $url;
@@ -229,7 +225,9 @@
         foreach ($word as $value) {
             $keyword = array_search($value, $word);
             if ($keyword === false) {
+                //単語出現数のリスト
                 $list_count_of_word["$value"] = 1;
+                //単語参照ドキュメント数のリスト
                 $list_count_of_document["$value"] = 1;
             }
         }
@@ -241,27 +239,41 @@
                 $sql = "select count(*) from list where contents like $q";
                 $sth = $dbh->prepare($sql);
                 $sth->execute();
-                $count_of_word = $sth->fetchColumn();
-                $list_count_of_word["$keyword"] = $count_of_word;
+                //単語出現数のリスト
+                $list_count_of_word["$keyword"] = $sth->fetchColumn();
 
                 $sql = "select count(distinct url) from list where contents = $q";
                 $sth = $dbh->prepare($sql);
                 $sth->execute();
-                $count_of_document = $sth->fetchColumn();
-                $list_count_of_document["$keyword"] = $count_of_document;
+                //単語参照ドキュメント数のリスト
+                $list_count_of_document["$keyword"] = $sth->fetchColumn();
             }
 
             $sql = "select count(distinct url) from list";
             $sth = $dbh->prepare($sql);
             $sth->execute();
+            //全てのドキュメントの数
             $count_of_all_document = $sth->fetchColumn();
-        } catch (PDOException $e) {
-            print "エラー!: " . $e->getMessage() . "<br/>";
+        } catch (PDOException $error) {
+            print "エラー!: " . $error->getMessage() . "<br/>";
             die();
         }
 
         arsort($list_count_of_word);
         $count_of_all_word = array_sum($list_count_of_word);
+
+        foreach ($list_count_of_word as $keyword => $value) {
+            //tf値のリスト
+            $list_term_frequency["$keyword"] = $value / $count_of_all_word;
+            //df値のリスト
+            $list_document_frequency["$keyword"] = log($list_count_of_document["$keyword"] + 1 / $count_of_all_document + 1);
+            //idf値のリスト
+            $list_inverse_document_frequency["$keyword"] = 1 / $list_document_frequency["$keyword"];
+            //tf-idf値のリスト
+            $list_of_idf_df["$keyword"] = $list_term_frequency["$keyword"] * $list_inverse_document_frequency["$keyword"];
+        }
+
+        arsort($list_of_idf_df);
     ?>
         <table class="word_analysis_table">
             <tr>
@@ -271,25 +283,11 @@
                 <th>tf値</th>
                 <th>df値</th>
                 <th>idf値</th>
-                <th>現在解析したページ内での出現回数</th>
-                <th>解析した単語が出現したページ数</th>
+                <th>単語出現数</th>
+                <th>単語参照ドキュメント数</th>
             </tr>
         <?php
 
-        foreach ($list_count_of_word as $keyword => $value) {
-            $list_term_frequency["$keyword"] = $value / $count_of_all_word;
-            $list_document_frequency["$keyword"] = log($list_count_of_document["$keyword"] / $count_of_all_document);
-
-            if ($list_document_frequency["$keyword"] != 0) {
-                $list_inverse_document_frequency["$keyword"] = 1 / $list_document_frequency["$keyword"];
-            } else {
-                $list_inverse_document_frequency["$keyword"] = 0;
-            }
-
-            $list_of_idf_df["$keyword"] = $list_term_frequency["$keyword"] * $list_inverse_document_frequency["$keyword"];
-        }
-
-        arsort($list_of_idf_df);
         $rank = 1;
         $count = 1;
         $prev_value = 1;
@@ -301,13 +299,21 @@
             }
 
             echo "<tr>";
+            //順位
             echo "<td>" . $rank . "</td>";
+            //単語
             echo "<td>" . $keyword . "</td>";
+            //tf-idf値のリスト
             echo "<td>" . $value . "</td>";
+            //tf値のリスト
             echo "<td>" . $list_term_frequency["$keyword"] . "</td>";
+            //df値のリスト
             echo "<td>" . $list_document_frequency["$keyword"] . "</td>";
+            //idf値のリスト
             echo "<td>" . $list_inverse_document_frequency["$keyword"] . "</td>";
+            //単語出現数のリスト
             echo "<td>" . $list_count_of_word["$keyword"] . "</td>";
+            //単語参照ドキュメント数のリスト
             echo "<td>" . $list_count_of_document["$keyword"] . "</td>";
             echo "</tr>";
 
